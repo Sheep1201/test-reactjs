@@ -36,3 +36,65 @@
     transform: rotate(360deg);
   }
 }
+
+
+.WrapperHeader {
+  background-color: rgb(255, 255, 255);
+  padding: 10px 20px;
+  align-items: center;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+  height: 70px;
+}
+
+h1{
+  font-size: 18px;
+}
+
+/* Thêm border và màu nền cho tất cả các mục menu */
+.ant-menu-item {
+  background-color: #f9f9f9; /* Màu nền nhạt */
+  margin: 10px 5px 10px 5px !important; /* Khoảng cách giữa các item */
+}
+
+/* Hiệu ứng hover */
+.ant-menu-item:hover {
+  background-color: #f0f8ff; /* Màu nền khi hover */
+  border: 1px solid #dfdfdf; /* Border màu xanh dương khi hover */
+}
+
+.button-scale{
+  width: 20px;
+  height: 20px;
+  border: 1px solid #000000;
+  border-radius: 5px;
+}
+
+.box{
+  width: 700px;
+  height: 50px;
+  border: 0.5px dashed rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  margin: 10px;
+}
+.box-title{
+  width: 700px;
+  height: 70px;
+  border: 0.5px dashed rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  margin: 10px;
+}
+
+.title{
+  background-color: rgb(238,245,253);
+  width: 670px;
+  height: 50px;
+  align-items: center;
+  display: flex;
+  font-size: 17px;
+}

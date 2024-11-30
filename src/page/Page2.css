@@ -1,0 +1,73 @@
+.WrapperHeader-2 {
+    background-color: rgb(255, 255, 255);
+    padding: 10px 20px;
+    align-items: center;
+    height: 70px;
+    border-bottom: 1px solid rgb(240, 239, 244);
+}
+
+h1 {
+    font-size: 18px;
+}
+
+.ant-menu-item {
+    border: 1px solid #ddd !important;
+    border-radius: 2px !important;
+}
+
+.button-scale {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #000000;
+    border-radius: 5px;
+}
+
+.box {
+    width: 700px;
+    height: 50px;
+    border: 0.5px dashed rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.box-title {
+    width: 700px;
+    height: 70px;
+    border: 0.5px dashed rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.title {
+    background-color: rgb(238, 245, 253);
+    width: 670px;
+    height: 50px;
+    align-items: center;
+    display: flex;
+    font-size: 17px;
+}
+
+.icon {
+    width: 25px;
+}
+
+.version {
+    border: 1px solid #dfdfdf;
+    border-radius: 10px;
+    background-color: rgba(238, 245, 253, 0.144);
+    margin-left: 80px;
+    font-size: 13px;
+}
+
+.custom-hr {
+    border: none;
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.2);
+    margin: 40px 0;
+}
