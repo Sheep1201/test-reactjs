@@ -14,6 +14,8 @@ import "./Page2.css";
 import menubar from "../asset/menu-bar.png";
 import grid from "../asset/grid.png";
 import menu from "../asset/menu.png";
+import FlowChart from './FlowChart';
+
 
 // Define menu items
 const menuItems = [
@@ -144,6 +146,10 @@ const Page2 = () => {
             <Header />
             <div style={{ display: "flex" }}>
                 <Sidebar />
+                <div style={{ flex: 1, padding: "20px", height: "100%", overflow: "auto" }}>
+                    {/* Flowchart Component */}
+                    <FlowChart />
+                </div>
             </div>
         </>
     );
