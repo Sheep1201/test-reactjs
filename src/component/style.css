@@ -129,7 +129,7 @@ label {
 }
 
 
-.hidden-btn{
+.hidden-btn {
     top: -20px;
     left: 0px;
     visibility: hidden;
@@ -142,7 +142,8 @@ label {
     justify-content: flex-start;
 }
 
-.delete-btn,.play-btn {
+.delete-btn,
+.play-btn {
     position: absolute;
     left: 0px;
     color: red;
@@ -156,19 +157,41 @@ label {
     justify-content: center;
     align-items: center;
 }
+
 .play-btn {
     left: 20px;
     color: blue;
     font-size: 15px;
 }
+
 .switch-btn {
     position: absolute;
     right: 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.x-btn {
+    position: absolute;
+    top: 0;
+    right: 0px;
+    background-Color: orange;
+    z-Index: 2;
+    width: 8%;
+    height: 57%;
+    display: flex;
+    align-Items: center;
+    justify-Content: center;
+    border-top-right-radius: 5px;
+    border-Bottom-Right-Radius: 5px;
+    color: white
 }
 
 .node-container:hover .delete-btn,
 .node-container:hover .play-btn,
 .node-container:hover .hidden-btn,
 .node-container:hover .switch-btn {
-    visibility: visible; /* Hiển thị nút delete khi hover vào node */
+    visibility: visible;
+    /* Hiển thị nút delete khi hover vào node */
 }

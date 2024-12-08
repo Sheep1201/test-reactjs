@@ -24,9 +24,13 @@ import {
     image_search
 } from '../asset/index';
 import ReactDOM from 'react-dom/client';
-import { Switch, Modal, Tabs, Input, Radio } from "antd";
+import { Switch, Modal, Tabs, Input, Radio, Popover, Button } from "antd";
 
-
+const content = (
+    <div>
+        <Button style={{ width: '100%' }}>Device_ID</Button>
+    </div>
+);
 
 const labelIconMapping = {
     'press back': <ArrowLeftOutlined />,
@@ -97,6 +101,14 @@ const DnDFlow = () => {
 
     // background
     const [variant, setVariant] = useState('Lines');
+
+    const capitalizeLabel = (label) => {
+        return label
+            .split(' ')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    };
+
 
     // update Node
     const [id, setId] = useState();
@@ -194,25 +206,42 @@ const DnDFlow = () => {
                     }}
                 />
             </>
-
             <div className="hidden-btn">
                 <div
-                    onClick={() => handleDelete(id)}
+                    onClick={(e) => {
+                        e.stopPropagation(); // Ngăn sự kiện click lan đến node
+                        handleDelete(id);
+                    }}
                     className="delete-btn"
                 >
                     <DeleteOutlined />
                 </div>
                 <div
                     className="play-btn"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Ngăn sự kiện click lan đến node
+                        console.log('Play button clicked!');
+                    }}
                 >
                     <CaretRightOutlined />
                 </div>
-                <Switch
-                    onChange={(checked) => handleOffNode(id, checked)} // Cập nhật trạng thái khi switch thay đổi
-                    size='small' className="switch-btn" defaultChecked />
+                <div className="switch-btn"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Ngăn sự kiện click lan truyền đến node cha
+                    }}
+                >
+                    <Switch
+                        onChange={(checked) => {
+                            handleOffNode(id, checked); // Thay đổi trạng thái
+                        }}
+                        size="small"
+                        defaultChecked
+                    />
+                </div>
             </div>
         </div>
     );
+
 
     const nodeTypes = useMemo(() => ({
         CustomPressHomeNode,
@@ -241,7 +270,7 @@ const DnDFlow = () => {
                 type: 'CustomPressHomeNode',
                 position,
                 data: {
-                    label: <>{icon} {type}</>,
+                    label: <>{icon} {capitalizeLabel(type)}</>, // Áp dụng hàm capitalizeLabel
                     isActive: true, // Thiết lập mặc định là active (bật switch)
                 },
                 className: "node-container",
@@ -264,6 +293,11 @@ const DnDFlow = () => {
         setId(val.id);
         setIsModalOpen(true);
         setNodeData(val);
+        if (e.target.classList.contains("delete-btn") ||
+            e.target.classList.contains("play-btn") ||
+            e.target.classList.contains("switch-btn")) {
+            return;
+        }
     };
 
 
@@ -273,9 +307,25 @@ const DnDFlow = () => {
             label: 'Option',
             children: [
                 <span style={{ marginTop: '30px' }}>Package Name</span>,
-                <Input placeholder="Package name or AppID" style={{ marginBottom: '30px' }} />,
+                <div style={{ position: 'relative' }}>
+                    <Input
+                        placeholder="Package name or AppID"
+                        style={{ marginBottom: '30px', zIndex: 1, height: '40px', boxShadow: 'none' }}
+                    />
+                    <Popover content={content} title="Variables" trigger="hover" className='x-btn'>
+                        <div>{"{X}"}</div>
+                    </Popover>
+                </div>,
                 <span>Timeout open app (Default 180 seconds)</span>,
-                <Input placeholder="180" style={{ marginBottom: '20px' }} />,
+                <div style={{ position: 'relative' }}>
+                    <Input
+                        placeholder="180"
+                        style={{ marginBottom: '30px', zIndex: 1, height: '40px', boxShadow: 'none' }}
+                    />
+                    <Popover content={content} title="Variables" trigger="hover" className='x-btn'>
+                        <div>{"{X}"}</div>
+                    </Popover>
+                </div>,
             ],
         },
         {
@@ -283,9 +333,25 @@ const DnDFlow = () => {
             label: 'Setting',
             children: [
                 <span style={{ marginTop: '30px' }}>Sleep time (seconds) before run this node (0 to disable)</span>,
-                <Input placeholder="0" style={{ marginBottom: '30px' }} />,
+                <div style={{ position: 'relative' }}>
+                    <Input
+                        placeholder="0"
+                        style={{ marginBottom: '30px', zIndex: 1, height: '40px', boxShadow: 'none' }}
+                    />
+                    <Popover content={content} title="Variables" trigger="hover" className='x-btn'>
+                        <div>{"{X}"}</div>
+                    </Popover>
+                </div>,
                 <span>Timeout (seconds) runtime for this node (0 to disable)</span>,
-                <Input placeholder="30" style={{ marginBottom: '20px' }} />,
+                <div style={{ position: 'relative' }}>
+                    <Input
+                        placeholder="30"
+                        style={{ marginBottom: '30px', zIndex: 1, height: '40px', boxShadow: 'none' }}
+                    />
+                    <Popover content={content} title="Variables" trigger="hover" className='x-btn'>
+                        <div>{"{X}"}</div>
+                    </Popover>
+                </div>,
                 <Radio.Group name="radiogroup" defaultValue={1}>,
                     <Radio value={1}>Succes node</Radio>,
                     <Radio value={2}>Fail node</Radio>,
@@ -296,7 +362,7 @@ const DnDFlow = () => {
             key: '3',
             label: 'Note',
             children: [
-                <Input placeholder="" style={{ height: '100px' }} />,
+                <Input placeholder="" style={{ height: '100px', boxShadow: 'none'  }} />,
             ],
         },
     ];
@@ -346,7 +412,6 @@ const DnDFlow = () => {
                         onInit={setReactFlowInstance}
                         onDrop={onDrop}
                         onDragOver={onDragOver}
-                        fitView
                     >
                         <Background color="gray" variant="variant" />
                         <Controls />
