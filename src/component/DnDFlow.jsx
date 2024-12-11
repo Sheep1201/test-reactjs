@@ -1,20 +1,10 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import ReactFlow, {
-    Edge,
-    Handle,
-    ReactFlowProvider,
-    addEdge,
-    useNodesState,
-    useEdgesState,
-    Controls,
-    Background
-} from 'reactflow';
+import ReactFlow, { Handle, ReactFlowProvider, useNodesState, useEdgesState, Controls, Background } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './style.css';
 import {
-    OpenAIOutlined, MailOutlined, ApiOutlined, CheckSquareOutlined, WifiOutlined, DeleteOutlined, FileOutlined, StopOutlined,
+    OpenAIOutlined, MailOutlined, ApiOutlined, CheckSquareOutlined, WifiOutlined, DeleteOutlined, FileOutlined, StopOutlined, GlobalOutlined,
     CaretRightOutlined, AppstoreOutlined, HomeOutlined, PictureOutlined, ArrowLeftOutlined, FullscreenOutlined, EditOutlined, FontSizeOutlined, ReloadOutlined,
-    GlobalOutlined
 } from "@ant-design/icons";
 import Icon from '@ant-design/icons';
 import {
@@ -25,6 +15,13 @@ import {
 } from '../asset/index';
 import ReactDOM from 'react-dom/client';
 import { Switch, Modal, Tabs, Input, Radio, Popover, Button } from "antd";
+import { StartNode as StartNodeCustom, CustomContextMenu, CustomHandleVariablesNode } from './StartNode';
+
+import StopNodeCustom from './StopNode'
+import { handleConnect, handleEdgeClick, handleEdgesChange, onDragOverHandler } from '../utils/edgeUlti';
+import { saveFlow, loadFlow } from '../utils/flowUtils';
+import CustomEdge from './EdgeCustom';
+
 
 const content = (
     <div>
@@ -86,28 +83,66 @@ const labelIconMapping = {
 };
 
 const initialNodes = [
+    {
+        id: '1',
+        type: 'startNode',
+        data: { label: 'Start' },
+        position: { x: 630, y: 400 },
+    },
+    {
+        id: '2',
+        type: 'contextMenu',
+        data: { title: 'Context Menu', menus: ['New menu', 'New menu', 'New menu', 'New menu'] },
+        position: { x: 600, y: 200 },
+    },
+    {
+        id: '3',
+        type: 'CustomHandleVariablesNode',
+        data: { label: '{x} Variables' },
+        position: { x: 600, y: 550 },
+        style: {
+            backgroundColor: '#efa01f',
+            padding: '10px',
+            borderRadius: '2px',
+            color: 'white',
+            border: 'none',
+            boxShadow:
+                '0 4px 6px rgba(239,160,31,0.2), 0 -4px 6px rgba(239,160,31,0.2), 4px 0 6px rgba(239,160,31,0.2), -4px 0 6px rgba(239,160,31,0.2)',
+        },
+    },
 ];
 
-function getId() {
-    return 'id-' + Math.random().toString(36).substr(2, 9);  // Tạo ID ngẫu nhiên
-}
 
 
-const DnDFlow = () => {
+const DnDFlow = ({ isPanelVisible }) => {
     const reactFlowWrapper = useRef(null);
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [edges, setEdges] = useEdgesState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
-
-    // background
-    const [variant, setVariant] = useState('Lines');
-
+    const [variables, setVariables] = useState([
+        {
+            id: `1`,
+            name: 'a',
+            value: 0,
+            default: 0,
+        },
+        {
+            id: `2`,
+            name: 'b',
+            value: 0,
+            default: 0,
+        },
+    ]);
     const capitalizeLabel = (label) => {
         return label
             .split(' ')
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
             .join(' ');
     };
+
+    function getId() {
+        return 'id-' + Math.random().toString(36).substr(2, 9);  // Tạo ID ngẫu nhiên
+    }
 
 
     // update Node
@@ -151,31 +186,33 @@ const DnDFlow = () => {
         });
     };
 
-    const onConnect = useCallback((params) => {
-        setEdges((eds) => addEdge({
-            ...params,
-            style: {
-                stroke: 'rgb(62,255,192)', // Màu đường nối
-                strokeWidth: 2, // Độ dày của đường nối
-                strokeDasharray: '5,5', // Nét đứt
-            },
-            markerEnd: { type: 'arrowclosed' },
-        }, eds));
-    }, []);
+    const onDragOver = useCallback(onDragOverHandler, []);
 
-    const onDragOver = useCallback((event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }, []);
+    const isEdgeAnimated = true; // Ví dụ: giá trị này có thể là cố định hoặc từ trạng thái
 
-    const CustomPressHomeNode = ({ data, id }) => (
+    // Xử lý sự thay đổi của các Edge
+    const onEdgesChange = useCallback(
+        (changes) => handleEdgesChange(changes, setEdges),
+        [setEdges]
+    );
+
+    // Xử lý khi click vào Edge (xóa)
+    const onEdgeClick = useCallback(
+        (event, edge) => {
+            event.stopPropagation();
+            handleEdgeClick(edge.id, setEdges);
+        },
+        [setEdges]
+    );
+
+    const CustomNodes = ({ data, id }) => (
         <div style={{ ...data.style }}>
             {data.label}
             <>
                 <Handle
                     type="source"
                     position="right"
-                    id={`${data.id}-success2`}
+                    id="true"
                     style={{
                         background: 'rgb(62,255,192)',
                         top: '33%',
@@ -184,9 +221,9 @@ const DnDFlow = () => {
                     }}
                 />
                 <Handle
-                    type="target"
+                    type="source"
                     position="right"
-                    id={`${data.id}-error`}
+                    id= "false"
                     style={{
                         background: 'red',
                         top: '66%',
@@ -197,7 +234,6 @@ const DnDFlow = () => {
                 <Handle
                     type="target"
                     position="left"
-                    id={`${data.id}-success1`}
                     style={{
                         background: 'rgb(62,255,192)',
                         top: '50%',
@@ -244,8 +280,17 @@ const DnDFlow = () => {
 
 
     const nodeTypes = useMemo(() => ({
-        CustomPressHomeNode,
+        CustomNodes,
+        StartNodeCustom: StartNodeCustom,
+        CustomContextMenu: CustomContextMenu,
+        CustomHandleVariablesNode: CustomHandleVariablesNode,
+        StopNodeCustom: StopNodeCustom,
     }), []);
+    initialNodes[0].type = 'StartNodeCustom';
+    initialNodes[1].type = 'CustomContextMenu';
+    initialNodes[2].type = 'CustomHandleVariablesNode';
+    const edgeTypes = { custom: CustomEdge };
+
 
     const onDrop = useCallback(
         (event) => {
@@ -263,24 +308,28 @@ const DnDFlow = () => {
                 y: event.clientY - reactFlowBounds.top,
             });
 
-            const icon = getIconForLabel(type); // Ánh xạ icon cho loại node
+            const icon = type.toLowerCase() === 'stop' ? null : getIconForLabel(type); // Ánh xạ icon cho loại node
 
             const newNode = {
                 id: getId(),
-                type: 'CustomPressHomeNode',
+                type: type.toLowerCase() === 'stop' ? 'StopNodeCustom' : 'CustomNodes',
                 position,
                 data: {
                     label: <>{icon} {capitalizeLabel(type)}</>, // Áp dụng hàm capitalizeLabel
                     isActive: true, // Thiết lập mặc định là active (bật switch)
                 },
                 className: "node-container",
-                style: {
-                    background: 'rgb(92,175,225)', // Màu mặc định của node
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px',
-                },
+                ...(type.toLowerCase() !== 'stop' && {
+                    style: {
+                        background: 'rgb(92,175,225)', // Màu mặc định của node
+                        color: 'white',
+                        borderRadius: '2px', // Bo tròn góc của node
+                        padding: '10px',
+                    },
+                }),
             };
+
+
 
             setNodes((nds) => nds.concat(newNode));
         },
@@ -362,11 +411,10 @@ const DnDFlow = () => {
             key: '3',
             label: 'Note',
             children: [
-                <Input placeholder="" style={{ height: '100px', boxShadow: 'none'  }} />,
+                <Input placeholder="" style={{ height: '100px', boxShadow: 'none' }} />,
             ],
         },
     ];
-
 
 
     // modal
@@ -395,7 +443,129 @@ const DnDFlow = () => {
         );
     };
 
-    // modal
+
+    // Run node
+
+    // Đổi màu Node hiện tại
+    const highlightNode = (nodeId) => {
+        setNodes((nds) =>
+            nds.map((node) =>
+                node.id === nodeId
+                    ? { ...node, style: { ...node.style, boxShadow: '0 0 10px 0.2px yellow',} }
+                    : node
+            )
+        );
+    };
+
+    // Reset màu Node về mặc định
+    const resetNode = (nodeId) => {
+        setNodes((nds) =>
+            nds.map((node) =>
+                node.id === nodeId
+                    ? { ...node, style: { ...node.style, boxShadow: 'none' } }
+                    : node
+            )
+        );
+    };
+
+    // Tìm Node tiếp theo dựa trên edges và sourceHandle
+    const findNextNodeId = (currentNodeId, result) => {
+        const edge = edges.find(
+            (e) => {
+                return e.source === currentNodeId && (e.sourceHandle === result || e.sourceHandle === null)
+            }
+        );
+        console.log("Edges:", edges);
+        console.log("Current Node ID:", currentNodeId, "Result:", result);
+        return edge ? edge.target : null;
+    };
+
+
+
+    // Logic xác định success hoặc fail
+    const processLogic = (node, updateVariables) => {
+        let result = "true";
+
+        updateVariables((prevVars) => {
+            const newVariables = [...prevVars];
+
+            switch (node.type) {
+                case "StartNodeCustom":
+                    console.log('type', node.type)
+                    break;
+                case "stop":
+                    break;
+                case "CustomNodes":
+                    const a = newVariables.find((v) => v.name === "a");
+                    const b = newVariables.find((v) => v.name === "b");
+
+                    a.value += 1; // Tăng giá trị
+                    b.value += 2;
+            }
+
+            return newVariables; // Trả về biến đã cập nhật
+        });
+        console.log("Process Logic Result:", result); // Debug
+        return result;
+    };
+
+    const isProcessing = useRef(false);
+
+    // Bắt đầu quy trình từ Node Start
+    const startProcess = async () => {
+        console.log("Start process");
+        isProcessing.current = true; // Đặt trạng thái bắt đầu chạy
+        // Reset variables về giá trị mặc định
+        setVariables((prevVars) =>
+            prevVars.map((v) => ({ ...v, value: v.default }))
+        );
+
+        let currentNodeId = '1'; // Node Start
+        while (currentNodeId) {
+            if (!isProcessing.current) {
+                console.log("Process stopped by user.");
+                break; // Thoát vòng lặp nếu dừng
+            }
+
+            const nodeToProcess = currentNodeId; // Giữ giá trị của currentNodeId tại vòng lặp hiện tại
+            const currentNode = nodes.find((node) => node.id === nodeToProcess);
+
+            if (!currentNode) {
+                console.error(`Node with ID ${nodeToProcess} not found!`);
+                break;
+            }
+
+            if (currentNode.type === 'StartNodeCustom') {
+                currentNodeId = findNextNodeId(nodeToProcess);
+                continue;
+            }
+
+            if (currentNode.type === 'stop') {
+                break;
+            }
+
+            console.log(`Node ${currentNode.type}: running...`);
+            highlightNode(nodeToProcess); // Đổi màu Node hiện tại
+
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Chờ 1 giây
+
+            // Logic xử lý kết quả
+            const result = processLogic(currentNode, setVariables);
+
+
+            resetNode(nodeToProcess); // Reset màu Node
+            currentNodeId = findNextNodeId(nodeToProcess, result); // Tìm Node tiếp theo
+        }
+
+        isProcessing.current = false; // Kết thúc trạng thái đang chạy
+        console.log("End process");
+    };
+
+
+    const stopProcess = () => {
+        isProcessing.current = false; // Dừng quá trình
+    }
+
 
     return (
         <div className="dndflow">
@@ -405,20 +575,75 @@ const DnDFlow = () => {
                         nodes={nodes}
                         edges={edges}
                         nodeTypes={nodeTypes}
+                        edgeTypes={edgeTypes}
                         onNodeClick={(e, val) => onNodeClick(e, val)}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
-                        onConnect={onConnect}
+                        onConnect={(connection) => handleConnect(connection, edges, setEdges, isEdgeAnimated)}
+                        onEdgeClick={onEdgeClick}
                         onInit={setReactFlowInstance}
                         onDrop={onDrop}
                         onDragOver={onDragOver}
                     >
-                        <Background color="gray" variant="variant" />
+                        <Background color="gray" variant="lines" gap={16} style={{ opacity: 0.2 }} />
                         <Controls />
                     </ReactFlow>
                 </div>
             </ReactFlowProvider>
             <CustomModal data={nodeData} />
+            {/* Panel hiển thị Variables */}
+            <div
+                style={{
+                    position: 'absolute',
+                    bottom: 30,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '60%',
+                    backgroundColor: 'white',
+                    zIndex: 1000,
+                    overflow: 'hidden',
+                    height: isPanelVisible ? '150px' : '0px',
+                    transition: 'height 0.5s ease, padding 0.5s ease',
+                    padding: isPanelVisible ? '10px' : '0',
+                    boxShadow: isPanelVisible ? '0px 2px 5px rgba(0, 0, 0, 0.2)' : 'none',
+                }}
+            >
+                <h4>Log</h4>
+                <hr/>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {variables.map((v) => (
+                        <li key={v.id}>
+                            <strong>{v.name}</strong>: {v.value}
+                        </li>
+                    ))}
+                </ul>
+                <button
+                    onClick={startProcess}
+                    disabled={isProcessing.current} // Không cho phép nhấn nếu đang chạy
+                    style={{
+                        position: 'absolute',
+                        zIndex: 10,
+                        top: 130,
+                        left: 10,
+                        padding: '10px 20px',
+                    }}
+                >
+                    Start Process
+                </button>
+                <button
+                    onClick={stopProcess}
+                    disabled={!isProcessing.current} // Không cho phép nhấn nếu không chạy
+                    style={{
+                        position: 'absolute',
+                        zIndex: 10,
+                        top: 130,
+                        left: 150,
+                        padding: '10px 20px',
+                    }}
+                >
+                    Stop Process
+                </button>
+            </div>
         </div>
     );
 };

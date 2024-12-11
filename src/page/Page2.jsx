@@ -1,17 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Col, Row, Menu, Switch, Input, Button } from "antd";
-import { HighlightOutlined, OpenAIOutlined, MailOutlined, ApiOutlined, CheckSquareOutlined, WifiOutlined, SettingTwoTone,DeleteOutlined, FileOutlined, StopOutlined,
+import {
+    HighlightOutlined, OpenAIOutlined, MailOutlined, ApiOutlined, CheckSquareOutlined, WifiOutlined, SettingTwoTone, DeleteOutlined, FileOutlined, StopOutlined,
     CaretRightOutlined, AppstoreOutlined, HomeOutlined, PictureOutlined, ArrowLeftOutlined, FullscreenOutlined, EditOutlined, FontSizeOutlined, ReloadOutlined,
-    GlobalOutlined } from "@ant-design/icons";
+    GlobalOutlined
+} from "@ant-design/icons";
 import "./Page2.css";
 import menubar from "../asset/menu-bar.png";
 import menu from "../asset/menu.png";
 import DnDFlow from '../component/DnDFlow';
 import Icon from '@ant-design/icons';
-import { stopSvg, table, cmd, database_backup, mobile_info, tfa, bracket, pause, question_circle, coding, loop, comment,
+import {
+    stopSvg, table, cmd, database_backup, mobile_info, tfa, bracket, pause, question_circle, coding, loop, comment,
     gui_random, table_header, variable, SpreadSheet, dice, write_file, read_file,
     installApp, attribute, cube, swap, mobile_vibrate, mobile_action, clipboard, keyboard, mobile_property,
-    image_search } from '../asset/index';
+    image_search
+} from '../asset/index';
 import ReactDOM from 'react-dom/client';
 
 const menuItems = [
@@ -89,7 +93,7 @@ const menuItems = [
             { key: "break", label: "Break", icon: <ApiOutlined style={{ fontSize: '20px' }} /> },
             { key: "comment", label: "Comment", icon: <Icon component={comment} style={{ fontSize: '20px', marginLeft: '-2px' }} /> },
             { key: "file", label: "File", icon: <FileOutlined style={{ fontSize: '20px', marginLeft: '-2px' }} /> },
-            { key: "stop", label: "Stop", icon: <StopOutlined style={{ fontSize: '20px', marginLeft: '-2px' }} /> },
+            { key: "stop", label: "Stop", type: "stop", icon: <StopOutlined style={{ fontSize: '20px', marginLeft: '-2px' }} /> },
             { key: "reconnect", label: "Reconnect", icon: <ReloadOutlined style={{ fontSize: '20px', marginLeft: '-2px' }} /> },
         ],
     },
@@ -117,10 +121,10 @@ const menuItemsWithDrag = menuItems.map(item => ({
     })) : [],
 }));
 
-const Header = () => (
+const Header = ({ isPanelVisible, togglePanel }) => (
     <Row className="WrapperHeader-2">
         <Col span={3} style={{ display: "flex" }}>
-            <ArrowLeftOutlined style={{ marginRight: "15px" }} /> Back
+            <ArrowLeftOutlined style={{ marginRight: "15px"}} /> Back
         </Col>
         <Col span={11} style={{ display: "flex", padding: "10px 10px" }}>
             <Input placeholder="Search node..." style={{ width: "300px" }} />
@@ -128,6 +132,9 @@ const Header = () => (
         <Col span={10} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px" }}>
             <Switch checkedChildren={<HighlightOutlined />} unCheckedChildren={<HighlightOutlined />} defaultChecked />
             <Button type="default">Device view</Button>
+            <Button type="default" onClick={togglePanel}>
+                {isPanelVisible ? "Ẩn Log" : "Hiện Log"}
+            </Button>
             <SettingTwoTone style={{ fontSize: "22px" }} />
             <img alt="iconMenuBar" src={menubar} className="icon" />
             <Icon component={table_header} src={menubar} className="icon" />
@@ -138,8 +145,9 @@ const Header = () => (
     </Row>
 );
 
+
 const Sidebar = () => (
-    <div style={{ width: "256px", height: "100vh", padding: "10px" }}>
+    <div style={{ width: "256px", height: "90vh", padding: "10px"}}>
         <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}>
             <h1>New App</h1>
             <EditOutlined />
@@ -151,28 +159,40 @@ const Sidebar = () => (
         <Menu
             mode="inline"
             defaultSelectedKeys={[]}
-            style={{ width: "100%", fontWeight: "500", padding: "20px" }}
+            style={{
+                width: "100%",
+                fontWeight: "500",
+                padding: "20px",
+                height: "calc(88vh - 150px)", // Chiều cao cố định cho menu
+                overflowY: "auto", // Hiển thị thanh cuộn dọc
+                overflowX: "hidden", // Ẩn thanh cuộn ngang
+            }}
             items={menuItemsWithDrag}
         />
     </div>
 );
 
+
 const Page2 = () => {
+    const [isPanelVisible, setIsPanelVisible] = useState(false); // Trạng thái hiển thị panel log
+
     return (
         <>
-            <Header />
+            <Header
+                isPanelVisible={isPanelVisible}
+                togglePanel={() => setIsPanelVisible(!isPanelVisible)}
+            />
             <div style={{ display: "flex" }}>
                 <Sidebar />
-                <div style={{ flex: 1, padding: "20px", height: "100%", overflow: "auto" }}>
-                    <div style={{ width: '100%', height: '100vh' }}>
-                        <DnDFlow />
+                <div style={{ flex: 1, padding: "0px", height: "100%" }}>
+                    <div style={{ width: '100%', height: '93vh' }}>
+                        <DnDFlow isPanelVisible={isPanelVisible} />
                     </div>
                 </div>
             </div>
         </>
     );
 };
-
 
 const mountNode = document.getElementById('root');
 ReactDOM.createRoot(mountNode).render(<Page2 />);
