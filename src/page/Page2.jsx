@@ -121,25 +121,34 @@ const menuItemsWithDrag = menuItems.map(item => ({
     })) : [],
 }));
 
-const Header = ({ isPanelVisible, togglePanel }) => (
+const Header = ({ isPanelVisible, togglePanel, isProcessing, toggleProcessing }) => (
     <Row className="WrapperHeader-2">
         <Col span={3} style={{ display: "flex" }}>
-            <ArrowLeftOutlined style={{ marginRight: "15px"}} /> Back
+            <ArrowLeftOutlined style={{ marginRight: "15px" }} /> Back
         </Col>
-        <Col span={11} style={{ display: "flex", padding: "10px 10px" }}>
+        <Col span={11} style={{ display: "flex", padding: "10px 23px" }}>
             <Input placeholder="Search node..." style={{ width: "300px" }} />
         </Col>
         <Col span={10} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px" }}>
             <Switch checkedChildren={<HighlightOutlined />} unCheckedChildren={<HighlightOutlined />} defaultChecked />
             <Button type="default">Device view</Button>
+
             <Button type="default" onClick={togglePanel}>
                 {isPanelVisible ? "Ẩn Log" : "Hiện Log"}
             </Button>
             <SettingTwoTone style={{ fontSize: "22px" }} />
             <img alt="iconMenuBar" src={menubar} className="icon" />
-            <Icon component={table_header} src={menubar} className="icon" />
+            <Icon component={table_header} src={menubar} className="icon" style={{fontSize: '30px'}}/>
             <Button type="primary">Save</Button>
-            <Button type="primary">Run</Button>
+            <Button style={{width: '60px'}}
+                type={isProcessing ? "primary" : "primary"} // Loại nút (default hoặc primary)
+                danger={isProcessing} // Đặt màu đỏ khi đang xử lý
+                onClick={toggleProcessing} // Gọi hàm bắt đầu hoặc dừng xử lý
+            >
+                {isProcessing ? "Stop" : "Run"} {/* Hiển thị tên nút */}
+            </Button>
+
+
             <img alt="iconMenu" src={menu} className="icon" />
         </Col>
     </Row>
@@ -147,7 +156,7 @@ const Header = ({ isPanelVisible, togglePanel }) => (
 
 
 const Sidebar = () => (
-    <div style={{ width: "256px", height: "90vh", padding: "10px"}}>
+    <div style={{ width: "256px", height: "90vh", padding: "10px" }}>
         <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}>
             <h1>New App</h1>
             <EditOutlined />
@@ -166,6 +175,7 @@ const Sidebar = () => (
                 height: "calc(88vh - 150px)", // Chiều cao cố định cho menu
                 overflowY: "auto", // Hiển thị thanh cuộn dọc
                 overflowX: "hidden", // Ẩn thanh cuộn ngang
+                scrollbarWidth: 'thin'
             }}
             items={menuItemsWithDrag}
         />
@@ -173,23 +183,40 @@ const Sidebar = () => (
 );
 
 
+
+
 const Page2 = () => {
     const [isPanelVisible, setIsPanelVisible] = useState(false); // Trạng thái hiển thị panel log
+    const [isProcessing, setIsProcessing] = useState(false); // Trạng thái hiển thị panel log
+    const [flowResult, setFlowResult] = useState(null);
 
+    const handleProcessEnd = (result) => {
+        console.log('Kết quả nhận được từ DnDFlow:', result);
+        setFlowResult(result); // Lưu kết quả vào state
+    };
+
+    React.useEffect(() => {
+        if (flowResult !== null) {
+            setIsProcessing(false); // Đổi trạng thái isProcessing về false khi có kết quả
+        }
+    }, [flowResult]);
     return (
         <>
             <Header
                 isPanelVisible={isPanelVisible}
                 togglePanel={() => setIsPanelVisible(!isPanelVisible)}
+                isProcessing={isProcessing}
+                toggleProcessing={() => setIsProcessing(!isProcessing)}
             />
             <div style={{ display: "flex" }}>
                 <Sidebar />
                 <div style={{ flex: 1, padding: "0px", height: "100%" }}>
                     <div style={{ width: '100%', height: '93vh' }}>
-                        <DnDFlow isPanelVisible={isPanelVisible} />
+                        <DnDFlow isPanelVisible={isPanelVisible} setIsPanelVisible={setIsPanelVisible} isProcessing={isProcessing} onProcessEnd={handleProcessEnd} />
                     </div>
                 </div>
             </div>
+
         </>
     );
 };

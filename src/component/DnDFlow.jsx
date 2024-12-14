@@ -21,7 +21,7 @@ import StopNodeCustom from './StopNode'
 import { handleConnect, handleEdgeClick, handleEdgesChange, onDragOverHandler } from '../utils/edgeUlti';
 import { saveFlow, loadFlow } from '../utils/flowUtils';
 import CustomEdge from './EdgeCustom';
-
+import LogPanel from './LogPanel';
 
 const content = (
     <div>
@@ -114,7 +114,7 @@ const initialNodes = [
 
 
 
-const DnDFlow = ({ isPanelVisible }) => {
+const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd }) => {
     const reactFlowWrapper = useRef(null);
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges] = useEdgesState([]);
@@ -223,7 +223,7 @@ const DnDFlow = ({ isPanelVisible }) => {
                 <Handle
                     type="source"
                     position="right"
-                    id= "false"
+                    id="false"
                     style={{
                         background: 'red',
                         top: '66%',
@@ -444,128 +444,12 @@ const DnDFlow = ({ isPanelVisible }) => {
     };
 
 
-    // Run node
-
-    // Đổi màu Node hiện tại
-    const highlightNode = (nodeId) => {
-        setNodes((nds) =>
-            nds.map((node) =>
-                node.id === nodeId
-                    ? { ...node, style: { ...node.style, boxShadow: '0 0 10px 0.2px yellow',} }
-                    : node
-            )
-        );
-    };
-
-    // Reset màu Node về mặc định
-    const resetNode = (nodeId) => {
-        setNodes((nds) =>
-            nds.map((node) =>
-                node.id === nodeId
-                    ? { ...node, style: { ...node.style, boxShadow: 'none' } }
-                    : node
-            )
-        );
-    };
-
-    // Tìm Node tiếp theo dựa trên edges và sourceHandle
-    const findNextNodeId = (currentNodeId, result) => {
-        const edge = edges.find(
-            (e) => {
-                return e.source === currentNodeId && (e.sourceHandle === result || e.sourceHandle === null)
-            }
-        );
-        console.log("Edges:", edges);
-        console.log("Current Node ID:", currentNodeId, "Result:", result);
-        return edge ? edge.target : null;
-    };
-
-
-
-    // Logic xác định success hoặc fail
-    const processLogic = (node, updateVariables) => {
-        let result = "true";
-
-        updateVariables((prevVars) => {
-            const newVariables = [...prevVars];
-
-            switch (node.type) {
-                case "StartNodeCustom":
-                    console.log('type', node.type)
-                    break;
-                case "stop":
-                    break;
-                case "CustomNodes":
-                    const a = newVariables.find((v) => v.name === "a");
-                    const b = newVariables.find((v) => v.name === "b");
-
-                    a.value += 1; // Tăng giá trị
-                    b.value += 2;
-            }
-
-            return newVariables; // Trả về biến đã cập nhật
-        });
-        console.log("Process Logic Result:", result); // Debug
-        return result;
-    };
-
-    const isProcessing = useRef(false);
-
-    // Bắt đầu quy trình từ Node Start
-    const startProcess = async () => {
-        console.log("Start process");
-        isProcessing.current = true; // Đặt trạng thái bắt đầu chạy
-        // Reset variables về giá trị mặc định
-        setVariables((prevVars) =>
-            prevVars.map((v) => ({ ...v, value: v.default }))
-        );
-
-        let currentNodeId = '1'; // Node Start
-        while (currentNodeId) {
-            if (!isProcessing.current) {
-                console.log("Process stopped by user.");
-                break; // Thoát vòng lặp nếu dừng
-            }
-
-            const nodeToProcess = currentNodeId; // Giữ giá trị của currentNodeId tại vòng lặp hiện tại
-            const currentNode = nodes.find((node) => node.id === nodeToProcess);
-
-            if (!currentNode) {
-                console.error(`Node with ID ${nodeToProcess} not found!`);
-                break;
-            }
-
-            if (currentNode.type === 'StartNodeCustom') {
-                currentNodeId = findNextNodeId(nodeToProcess);
-                continue;
-            }
-
-            if (currentNode.type === 'stop') {
-                break;
-            }
-
-            console.log(`Node ${currentNode.type}: running...`);
-            highlightNode(nodeToProcess); // Đổi màu Node hiện tại
-
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Chờ 1 giây
-
-            // Logic xử lý kết quả
-            const result = processLogic(currentNode, setVariables);
-
-
-            resetNode(nodeToProcess); // Reset màu Node
-            currentNodeId = findNextNodeId(nodeToProcess, result); // Tìm Node tiếp theo
+    const handleProcessEnd = (result) => {
+        console.log('Quá trình kết thúc:', result);
+        if (onProcessEnd) {
+            onProcessEnd(result); // Gọi callback để truyền dữ liệu lên component cha
         }
-
-        isProcessing.current = false; // Kết thúc trạng thái đang chạy
-        console.log("End process");
     };
-
-
-    const stopProcess = () => {
-        isProcessing.current = false; // Dừng quá trình
-    }
-
 
     return (
         <div className="dndflow">
@@ -591,59 +475,18 @@ const DnDFlow = ({ isPanelVisible }) => {
                 </div>
             </ReactFlowProvider>
             <CustomModal data={nodeData} />
-            {/* Panel hiển thị Variables */}
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: 30,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '60%',
-                    backgroundColor: 'white',
-                    zIndex: 1000,
-                    overflow: 'hidden',
-                    height: isPanelVisible ? '150px' : '0px',
-                    transition: 'height 0.5s ease, padding 0.5s ease',
-                    padding: isPanelVisible ? '10px' : '0',
-                    boxShadow: isPanelVisible ? '0px 2px 5px rgba(0, 0, 0, 0.2)' : 'none',
-                }}
-            >
-                <h4>Log</h4>
-                <hr/>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {variables.map((v) => (
-                        <li key={v.id}>
-                            <strong>{v.name}</strong>: {v.value}
-                        </li>
-                    ))}
-                </ul>
-                <button
-                    onClick={startProcess}
-                    disabled={isProcessing.current} // Không cho phép nhấn nếu đang chạy
-                    style={{
-                        position: 'absolute',
-                        zIndex: 10,
-                        top: 130,
-                        left: 10,
-                        padding: '10px 20px',
-                    }}
-                >
-                    Start Process
-                </button>
-                <button
-                    onClick={stopProcess}
-                    disabled={!isProcessing.current} // Không cho phép nhấn nếu không chạy
-                    style={{
-                        position: 'absolute',
-                        zIndex: 10,
-                        top: 130,
-                        left: 150,
-                        padding: '10px 20px',
-                    }}
-                >
-                    Stop Process
-                </button>
-            </div>
+            <LogPanel
+                nodes={nodes}
+                setNodes={setNodes}
+                edges={edges}
+                setEdges={setEdges}
+                variables={variables}
+                setVariables={setVariables}
+                isPanelVisible={isPanelVisible}
+                setIsPanelVisible={setIsPanelVisible}
+                isProcessing={isProcessing}
+                onProcessEnd={handleProcessEnd}
+            />
         </div>
     );
 };
