@@ -121,7 +121,7 @@ const menuItemsWithDrag = menuItems.map(item => ({
     })) : [],
 }));
 
-const Header = ({ isPanelVisible, togglePanel, isProcessing, toggleProcessing }) => (
+const Header = ({ isPanelVisible, togglePanel, isDebugVisible, toggleDebug, isProcessing, toggleProcessing }) => (
     <Row className="WrapperHeader-2">
         <Col span={3} style={{ display: "flex" }}>
             <ArrowLeftOutlined style={{ marginRight: "15px" }} /> Back
@@ -132,7 +132,9 @@ const Header = ({ isPanelVisible, togglePanel, isProcessing, toggleProcessing })
         <Col span={10} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px" }}>
             <Switch checkedChildren={<HighlightOutlined />} unCheckedChildren={<HighlightOutlined />} defaultChecked />
             <Button type="default">Device view</Button>
-
+            <Button type="default" onClick={toggleDebug}>
+                {isDebugVisible ? "Tắt Debug" : "Bật Debug"}
+            </Button>
             <Button type="default" onClick={togglePanel}>
                 {isPanelVisible ? "Ẩn Log" : "Hiện Log"}
             </Button>
@@ -187,7 +189,8 @@ const Sidebar = () => (
 
 const Page2 = () => {
     const [isPanelVisible, setIsPanelVisible] = useState(false); // Trạng thái hiển thị panel log
-    const [isProcessing, setIsProcessing] = useState(false); // Trạng thái hiển thị panel log
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [isDebugVisible, setIsDebugVisible] = useState(false); // Trạng thái bật chế độ debug
     const [flowResult, setFlowResult] = useState(null);
 
     const handleProcessEnd = (result) => {
@@ -205,6 +208,8 @@ const Page2 = () => {
             <Header
                 isPanelVisible={isPanelVisible}
                 togglePanel={() => setIsPanelVisible(!isPanelVisible)}
+                isDebugVisible={isDebugVisible}
+                toggleDebug={() => setIsDebugVisible(!isDebugVisible)}
                 isProcessing={isProcessing}
                 toggleProcessing={() => setIsProcessing(!isProcessing)}
             />
@@ -212,7 +217,7 @@ const Page2 = () => {
                 <Sidebar />
                 <div style={{ flex: 1, padding: "0px", height: "100%" }}>
                     <div style={{ width: '100%', height: '93vh' }}>
-                        <DnDFlow isPanelVisible={isPanelVisible} setIsPanelVisible={setIsPanelVisible} isProcessing={isProcessing} onProcessEnd={handleProcessEnd} />
+                        <DnDFlow isPanelVisible={isPanelVisible} setIsPanelVisible={setIsPanelVisible} isDebugVisible={isDebugVisible} isProcessing={isProcessing} onProcessEnd={handleProcessEnd} />
                     </div>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import ReactFlow, { Handle, ReactFlowProvider, useNodesState, useEdgesState, Controls, Background } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './style.css';
@@ -113,8 +113,7 @@ const initialNodes = [
 ];
 
 
-
-const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd }) => {
+const DnDFlow = ({ isPanelVisible, setIsPanelVisible, isDebugVisible, isProcessing, onProcessEnd }) => {
     const reactFlowWrapper = useRef(null);
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges] = useEdgesState([]);
@@ -143,7 +142,6 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
     function getId() {
         return 'id-' + Math.random().toString(36).substr(2, 9);  // Tạo ID ngẫu nhiên
     }
-
 
     // update Node
     const [id, setId] = useState();
@@ -205,6 +203,45 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
         [setEdges]
     );
 
+    const handleColorChange = (id) => {
+        setNodes((prevNodes) => {
+            return prevNodes.map((node) => {
+                if (node.id === id) {
+                    const isRed = node.data.color === 'red'; // Kiểm tra màu hiện tại
+                    const updatedNode = {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            color: isRed ? 'gray' : 'red', // Đổi màu giữa red và gray
+                        },
+                    };
+                    return updatedNode;
+                }
+                return node;
+            });
+        });
+    };
+
+
+    const handleCheckPointClick = (nodeId) => {
+        setNodes((prevNodes) => {
+            return prevNodes.map((node) => {
+                if (node.id === nodeId) {
+                    const updatedNode = {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            checkPoint: !node.data.checkPoint, // Đổi trạng thái checkPoint
+                        },
+                    };
+                    return updatedNode;
+                }
+                return node;
+            });
+        });
+    };
+
+
     const CustomNodes = ({ data, id }) => (
         <div style={{ ...data.style }}>
             {data.label}
@@ -215,9 +252,9 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
                     id="true"
                     style={{
                         background: 'rgb(62,255,192)',
-                        top: '33%',
-                        width: '5px',
-                        height: '5px',
+                        top: '30%',
+                        width: '7px',
+                        height: '7px',
                     }}
                 />
                 <Handle
@@ -226,9 +263,9 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
                     id="false"
                     style={{
                         background: 'red',
-                        top: '66%',
-                        width: '5px',
-                        height: '5px',
+                        top: '70%',
+                        width: '7px',
+                        height: '7px',
                     }}
                 />
                 <Handle
@@ -237,8 +274,8 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
                     style={{
                         background: 'rgb(62,255,192)',
                         top: '50%',
-                        width: '5px',
-                        height: '5px',
+                        width: '7px',
+                        height: '7px',
                     }}
                 />
             </>
@@ -275,9 +312,29 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
                     />
                 </div>
             </div>
+            {isDebugVisible && (
+                <div className="checkPoint-btn" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="checkPoint-circle"
+                        style={{ backgroundColor: data.color || 'gray' }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleColorChange(id); // Đổi màu khi click
+                            handleCheckPointClick(id);
+                        }}
+                    />
+                    <div
+                        className="checkPoint-circle2"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleColorChange(id);
+                            handleCheckPointClick(id);
+                        }}
+                    />
+                </div>
+            )}
         </div>
     );
-
 
     const nodeTypes = useMemo(() => ({
         CustomNodes,
@@ -285,7 +342,7 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
         CustomContextMenu: CustomContextMenu,
         CustomHandleVariablesNode: CustomHandleVariablesNode,
         StopNodeCustom: StopNodeCustom,
-    }), []);
+    }), [isDebugVisible]);
     initialNodes[0].type = 'StartNodeCustom';
     initialNodes[1].type = 'CustomContextMenu';
     initialNodes[2].type = 'CustomHandleVariablesNode';
@@ -317,6 +374,7 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
                 data: {
                     label: <>{icon} {capitalizeLabel(type)}</>, // Áp dụng hàm capitalizeLabel
                     isActive: true, // Thiết lập mặc định là active (bật switch)
+                    checkPoint: false,
                 },
                 className: "node-container",
                 ...(type.toLowerCase() !== 'stop' && {
@@ -483,6 +541,7 @@ const DnDFlow = ({ isPanelVisible,setIsPanelVisible, isProcessing, onProcessEnd 
                 variables={variables}
                 setVariables={setVariables}
                 isPanelVisible={isPanelVisible}
+                isDebugVisible={isDebugVisible}
                 setIsPanelVisible={setIsPanelVisible}
                 isProcessing={isProcessing}
                 onProcessEnd={handleProcessEnd}
